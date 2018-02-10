@@ -9,6 +9,7 @@ const request = require('supertest');
 const middleware = require('../../');
 const webpackConfig = require('../fixtures/server-test/webpack.config');
 const webpackMultiConfig = require('../fixtures/server-test/webpack.array.config');
+const issue258Config = require('../fixtures/server-test/webpack.issue258.config');
 
 describe('Server', () => {
   let instance;
@@ -242,6 +243,24 @@ describe('Server', () => {
           request(app).get('/js2/bar.js')
             .expect(200, done);
         });
+    });
+  });
+
+  describe('MultiCompiler: One `publicPath`', () => {
+    before((done) => {
+      app = express();
+      const compiler = webpack(issue258Config);
+      instance = middleware(compiler, {
+        stats: 'errors-only',
+        logLevel: 'silent'
+      });
+      app.use(instance);
+      listen = listenShorthand(done);
+    });
+    after(close);
+
+    it('request to both bundle files', (done) => {
+      request(app).get('/client/foo.js').expect(200, done);
     });
   });
 
